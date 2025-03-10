@@ -1,0 +1,54 @@
+clear all
+
+path="/media/ariana/T7/Pinning_Robot/202502_phages/"
+
+
+sample="Plate_8"
+
+names=dir(path+sample);
+
+imcell=cell(1, length(names)-2);
+
+
+
+
+for i=1:length(imcell)
+
+
+A=imread(path+sample+"/"+names(i+2).name, 3);
+C=A*3;
+
+
+
+%B=imlocalbrighten(A);
+%C=imlocalbrighten(B);
+%imshow(C);
+imcell{i}=C;
+end
+%%
+
+for j=1:length(imcell)
+    
+    im=im2uint8(imcell{j});
+    im=imcell{j};
+    imwrite(im, path+sample+'vid/'+sample+string(j)+'.jpg');
+    
+    
+end
+
+
+%%
+vid=VideoWriter(path+sample+'.avi');
+vid.FrameRate=5;
+vid.Quality=100;
+
+open(vid);
+
+
+for k=1:length(imcell)
+    %image=imread(fullfile(path+sample+'vid/', sample+string(k)+'.jpg'));
+    image=imread(fullfile(path+sample+"/", names(k+2).name));
+    writeVideo(vid, image);
+end
+
+close(vid);
