@@ -1,0 +1,145 @@
+clear all
+
+path="/home/isabel/MasterBackup/RoboterBilder/"
+
+
+samples=["SW1_2_3_4" "SW5_6_7_8" "SW9_10_BF1_2" "BF3_4_5_6"  "BF7_8_9_10"]
+
+allArea=cell(5, 1);
+
+for u=1:length(samples)
+names=dir(path+samples(u));
+
+imcell=cell(4, length(names)-2);
+
+imdata=cell(4, 48, 3);
+
+for i=1:length(imcell)
+A=imread(path+samples(u)+"/"+names(i+2).name, 3);
+C=imrotate(A, 180);
+C=C*3;
+D1=imcrop(C, [40 60 250 175]);
+D2=imcrop(C, [60+220 70 250 175]);
+D3=imcrop(C, [40 10+220 250 220-45]);
+D4=imcrop(C, [10+330 10+220 250 220-45]);
+%imshow(D1);
+imcell{1, i}=D1;
+imcell{2, i}=D2;
+imcell{3, i}=D3;
+imcell{4, i}=D4;
+end
+
+
+
+for k=1:4
+    
+    for i=1:length(imcell)
+        img=imcell{k, i};
+        %imshow(img)
+        img=im2gray(img);
+        img=imgaussfilt(img, 5.5);
+       
+       % imshow(img)
+        %img=imadjust(img(:, :, 1));
+        img=imbinarize(img(:,:, 1), 'adaptive', 'Sensitivity', 0.55);
+        %imshow(img);
+        bw=bwarea(img);
+        [B, L]=bwboundaries(img, 'noholes');
+        
+        %imshow(label2rgb(L, @jet, [.5 .5 .5]))
+        %n = cellfun(@length, B);
+        %[maxn, idxn]=max(n);
+        %boundary = B{idxn};
+        %plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
+        for n=1:length(B)
+            boundary=B{n};
+            %plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
+        end
+        
+        [lang,kurz]=size(boundary);
+        Areas=[];
+        
+        for o=1:lang
+            ans1=sum(L==o);
+            b=sum(ans1);
+            Areas=[Areas,b];
+        end
+
+        les=[];
+        for m=1:length(B)
+            [len,w]=size(B{m,1});
+            les=[les;len];
+        end
+
+        Cont=max(les);
+
+        Flache=max(Areas);
+        
+        if isempty(Cont)
+            Roughness=0;
+        else
+            Roughness=Cont/Flache;
+        end
+        
+        imdata{k, i, 1}=Flache;
+        imdata{k, i, 2}=Flache*0.21;
+        imdata{k, i, 3}=Roughness;
+        
+        
+    end
+end
+ allArea{u}=imdata;
+end
+
+%%
+time=linspace(1, 48, 48);
+h=figure;
+
+bf36=allArea{4};
+bf910=allArea{5};
+sw9bf2=allArea{3};
+sw14=allArea{1};
+sw58=allArea{2};
+
+plot(time,[sw14{4, :, 2}], 'Color', [0.75 0 0.75]);
+hold on;
+
+plot(time,[sw14{1, :, 2}]);
+hold on;
+
+plot(time,[sw14{2, :, 2}]);
+
+hold on;
+
+plot(time, [sw14{3, :, 2}]);
+hold on;
+
+
+plot(time,[sw58{1, :, 2}]);
+hold on;
+
+plot(time,[sw58{2, :, 2}]);
+hold on;
+
+plot(time,[sw58{3, :, 2}]);
+
+hold on;
+
+plot(time,[sw58{4, :, 2}], 'k');
+hold on;
+plot(time, [sw9bf2{1, :, 2}],'Color', [0 0.5 0]);
+hold on;
+
+plot(time,[sw9bf2{2, :, 2}]);
+
+hold on;
+%plot(time,[bf910{4, :, 2}], 'c');
+
+set(gca, 'box', 'off');
+xlim([0 48])
+ylim([0 450])
+
+xlabel('time in h', 'FontSize', 15);
+ylabel('colony area in mm^2', 'FontSize', 15);
+legend('{ANC}','{SW1}', '{SW2}', '{SW3}','{SW5}', '{SW6}', '{SW7}', '{SW8}', '{SW9}', '{SW10}','Location', 'northwest');
+%legend('{ANC}','{BF1}', '{BF2}', '{BF3}', '{BF4}','{BF5}', '{BF6}', '{BF7}', '{BF8}', '{BF9}', '{BF10}','Location', 'northwest');
